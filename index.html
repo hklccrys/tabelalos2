@@ -1,89 +1,114 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Tabela de Pontos</title>
-  <style>
-    body { font-family: Arial; text-align: center; padding: 20px; background-color: #f0f0f0; }
-    table { margin: 0 auto; border-collapse: collapse; width: 80%; background: white; }
-    th, td { border: 1px solid #ccc; padding: 10px; }
-    th { background-color: #333; color: white; }
-    button { margin: 2px; padding: 5px 10px; }
-    input { padding: 5px; margin-right: 5px; }
-  </style>
+<meta charset="UTF-8">
+<title>Tabela de Pontos — Admin Control</title>
+<style>
+  body {font-family: Arial; text-align:center; padding:20px; background:#f0f0f0;}
+  table {margin:20px auto; border-collapse:collapse; width:80%; background:#fff;}
+  th, td {border:1px solid #ccc; padding:10px;}
+  th {background:#333;color:#fff;}
+  button {margin:2px; padding:5px 10px;}
+  input {padding:5px;margin:5px;}
+  #loginArea {margin-bottom:20px;}
+</style>
 </head>
 <body>
 
   <h1>🏆 Tabela de Pontos dos Usuários</h1>
 
-  <div>
+  <div id="loginArea"></div>
+
+  <div id="adminControls" style="display:none;">
     <input type="text" id="nomeUsuario" placeholder="Nome do usuário">
     <button onclick="adicionarUsuario()">Adicionar</button>
+    <button onclick="logout()">Logout</button>
   </div>
 
   <table id="tabelaUsuarios">
-    <thead>
-      <tr>
-        <th>Nome</th>
-        <th>Vitórias</th>
-        <th>Derrotas</th>
-        <th>Pontos</th>
-        <th>Ações</th>
-      </tr>
-    </thead>
+    <thead><tr>
+      <th>Nome</th><th>Vitórias</th><th>Derrotas</th><th>Pontos</th><th id="acoesHeader" style="display:none;">Ações</th>
+    </tr></thead>
     <tbody></tbody>
   </table>
 
-  <script>
-    let usuarios = [];
+<script>
+  const adminUser = 'admin';
+  const adminPass = '010508';
 
-    function atualizarTabela() {
-      const corpoTabela = document.querySelector("#tabelaUsuarios tbody");
-      corpoTabela.innerHTML = "";
+  let usuarios = JSON.parse(localStorage.getItem('usuarios')) || [];
 
-      usuarios.forEach((usuario, index) => {
-        const tr = document.createElement("tr");
+  function salvar() {
+    localStorage.setItem('usuarios', JSON.stringify(usuarios));
+  }
 
-        const pontos = usuario.vitorias * 3 - usuario.derrotas;
+  function atualizarTabela() {
+    const tbody = document.querySelector("#tabelaUsuarios tbody");
+    tbody.innerHTML = '';
+    usuarios.forEach((u, i) => {
+      const pontos = u.vitorias * 3 - u.derrotas;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${u.nome}</td>
+        <td>${u.vitorias}</td>
+        <td>${u.derrotas}</td>
+        <td>${pontos}</td>
+        <td>${isAdmin() ? 
+          `<button onclick="registrarVitoria(${i})">Vitória</button>
+           <button onclick="registrarDerrota(${i})">Derrota</button>
+           <button onclick="removerUsuario(${i})">Remover</button>` : ''}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+    document.getElementById('acoesHeader').style.display = isAdmin() ? '' : 'none';
+  }
 
-        tr.innerHTML = `
-          <td>${usuario.nome}</td>
-          <td>${usuario.vitorias}</td>
-          <td>${usuario.derrotas}</td>
-          <td>${pontos}</td>
-          <td>
-            <button onclick="registrarVitoria(${index})">Vitória</button>
-            <button onclick="registrarDerrota(${index})">Derrota</button>
-            <button onclick="removerUsuario(${index})">Remover</button>
-          </td>
-        `;
-        corpoTabela.appendChild(tr);
-      });
-    }
+  function adicionarUsuario() {
+    const nome = document.getElementById('nomeUsuario').value.trim();
+    if (!nome) return alert('Digite um nome!');
+    usuarios.push({ nome, vitorias:0, derrotas:0 });
+    document.getElementById('nomeUsuario').value = '';
+    salvar(); atualizarTabela();
+  }
 
-    function adicionarUsuario() {
-      const nome = document.getElementById("nomeUsuario").value.trim();
-      if (nome === "") return alert("Digite um nome!");
-      usuarios.push({ nome, vitorias: 0, derrotas: 0 });
-      document.getElementById("nomeUsuario").value = "";
+  function registrarVitoria(i) { usuarios[i].vitorias++; salvar(); atualizarTabela(); }
+  function registrarDerrota(i) { usuarios[i].derrotas++; salvar(); atualizarTabela(); }
+  function removerUsuario(i) { if(confirm('Remover usuário?')){usuarios.splice(i,1); salvar(); atualizarTabela();}}
+
+  function isAdmin() { return localStorage.getItem('isAdmin') === 'true'; }
+
+  function showLogin() {
+    document.getElementById('loginArea').innerHTML = `
+      <input type="text" id="loginUser" placeholder="Usuário">
+      <input type="password" id="loginPass" placeholder="Senha">
+      <button onclick="login()">Login</button>
+    `;
+  }
+
+  function login() {
+    const user = document.getElementById('loginUser').value;
+    const pass = document.getElementById('loginPass').value;
+    if (user === adminUser && pass === adminPass) {
+      localStorage.setItem('isAdmin','true');
+      document.getElementById('loginArea').innerHTML = '';
+      document.getElementById('adminControls').style.display = '';
       atualizarTabela();
-    }
+    } else alert('Credenciais inválidas!');
+  }
 
-    function registrarVitoria(index) {
-      usuarios[index].vitorias++;
-      atualizarTabela();
-    }
+  function logout() {
+    localStorage.removeItem('isAdmin');
+    document.getElementById('adminControls').style.display = 'none';
+    showLogin();
+    atualizarTabela();
+  }
 
-    function registrarDerrota(index) {
-      usuarios[index].derrotas++;
-      atualizarTabela();
-    }
-
-    function removerUsuario(index) {
-      usuarios.splice(index, 1);
-      atualizarTabela();
-    }
-  </script>
+  // Inicialização
+  if (isAdmin()) {
+    document.getElementById('adminControls').style.display = '';
+  } else showLogin();
+  atualizarTabela();
+</script>
 
 </body>
 </html>
