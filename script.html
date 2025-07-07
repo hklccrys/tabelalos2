@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Tabela de Pontos</title>
+  <style>
+    body { font-family: Arial; text-align: center; padding: 20px; background-color: #f0f0f0; }
+    table { margin: 0 auto; border-collapse: collapse; width: 80%; background: white; }
+    th, td { border: 1px solid #ccc; padding: 10px; }
+    th { background-color: #333; color: white; }
+    button { margin: 2px; padding: 5px 10px; }
+    input { padding: 5px; margin-right: 5px; }
+  </style>
+</head>
+<body>
+
+  <h1>🏆 Tabela de Pontos dos Usuários</h1>
+
+  <div>
+    <input type="text" id="nomeUsuario" placeholder="Nome do usuário">
+    <button onclick="adicionarUsuario()">Adicionar</button>
+  </div>
+
+  <table id="tabelaUsuarios">
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>Vitórias</th>
+        <th>Derrotas</th>
+        <th>Pontos</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    let usuarios = [];
+
+    function atualizarTabela() {
+      const corpoTabela = document.querySelector("#tabelaUsuarios tbody");
+      corpoTabela.innerHTML = "";
+
+      usuarios.forEach((usuario, index) => {
+        const tr = document.createElement("tr");
+
+        const pontos = usuario.vitorias * 3 - usuario.derrotas;
+
+        tr.innerHTML = `
+          <td>${usuario.nome}</td>
+          <td>${usuario.vitorias}</td>
+          <td>${usuario.derrotas}</td>
+          <td>${pontos}</td>
+          <td>
+            <button onclick="registrarVitoria(${index})">Vitória</button>
+            <button onclick="registrarDerrota(${index})">Derrota</button>
+            <button onclick="removerUsuario(${index})">Remover</button>
+          </td>
+        `;
+        corpoTabela.appendChild(tr);
+      });
+    }
+
+    function adicionarUsuario() {
+      const nome = document.getElementById("nomeUsuario").value.trim();
+      if (nome === "") return alert("Digite um nome!");
+      usuarios.push({ nome, vitorias: 0, derrotas: 0 });
+      document.getElementById("nomeUsuario").value = "";
+      atualizarTabela();
+    }
+
+    function registrarVitoria(index) {
+      usuarios[index].vitorias++;
+      atualizarTabela();
+    }
+
+    function registrarDerrota(index) {
+      usuarios[index].derrotas++;
+      atualizarTabela();
+    }
+
+    function removerUsuario(index) {
+      usuarios.splice(index, 1);
+      atualizarTabela();
+    }
+  </script>
+
+</body>
+</html>
